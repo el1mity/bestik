@@ -1,0 +1,83 @@
+\documentclass[a4paper,12pt,openany]{book}  % openany убирает пустые страницы между главами
+\usepackage[utf8]{inputenc}
+\usepackage[russian]{babel}
+\usepackage{geometry}
+\usepackage{indentfirst}
+\usepackage{parskip}
+\usepackage{setspace}
+\usepackage{titlesec}
+\usepackage{amsmath}
+
+\geometry{left=2.5cm,right=2.5cm,top=2cm,bottom=2cm}
+
+% Настройка заголовка главы 
+\titleformat{\chapter}
+  {\centering\bfseries}
+  {}{0em}{}
+
+% Отключить нумерацию глав
+\setcounter{secnumdepth}{0}
+
+% Настройка абзацев
+\setlength{\parindent}{1.25cm}
+\setlength{\parskip}{0pt}
+\singlespacing
+
+\begin{document}
+
+% Нумерация страниц внизу по центру
+\pagestyle{plain}
+
+\begin{center}
+{\Large\bfseries Избранные произведения}
+\end{center}
+\vspace{0.5cm}
+\begin{center}
+{\large ДАНИИЛ ХАРМС}
+\end{center}
+\vspace{1cm}
+
+\chapter{ВОПРОС}
+\input{story1}
+\vspace{0.3cm}
+
+\begin{center}
+* * *
+\end{center}
+
+\chapter{ЗАБЫЛ, КАК НАЗЫВАЕТСЯ}
+\input{story2}
+\vspace{0.3cm}
+
+\begin{center}
+* * *
+\end{center}
+
+\chapter{ }
+\input{story3}
+\vspace{0.3cm}
+
+\begin{center}
+* * *
+\end{center}
+
+\chapter{ОЧЕНЬ СТРАШНАЯ ИСТОРИЯ}
+\input{story4}
+\vspace{0.3cm}
+
+\begin{center}
+* * *
+\end{center}
+
+\chapter{ПАШКВИЛЬ}
+\input{story5}
+\vspace{0.3cm}
+
+\begin{center}
+* * *
+\end{center}
+
+\chapter{УПАДАНИЕ}
+\input{story6}
+
+\end{document}
