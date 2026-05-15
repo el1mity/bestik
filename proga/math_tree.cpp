@@ -1,7 +1,7 @@
 ﻿#include <iostream>
 #include <string>
 #include <stack>
-#include <vector>
+#include <cctype>
 using namespace std;
 
 struct tree { // узел
@@ -19,77 +19,52 @@ tree* node(char x) { // создание узла
     return n;
 }
 
-// проверка является ли символ оператором
-bool is_operator(char c) {
-    return c == '+' || c == '-' || c == '*' || c == '/';
-}
+tree* create_tree(string str) {
+    tree* tr = NULL;
+    for (unsigned int i = 0; i < str.length(); i++) {
+        tree* n = node(str[i]);
 
-// проверка приоритета операторов
-int priority(char op) {
-    if (op == '+' || op == '-') return 1;
-    if (op == '*' || op == '/') return 2;
-    return 0;
-}
-
-// преобразование в постфиксную запись
-string to_postfix(string expr) {
-    string result;
-    stack<char> ops;
-
-    for (char c : expr) {
-        if (isdigit(c)) {
-            result += c; // числа сразу добавляем
+        if (str[i] == '-' || str[i] == '+') { // становится корнем
+            if (tr != NULL) tr->parent = n;
+            n->left = tr;
+            tr = n;
         }
-        else if (c == '(') {
-            ops.push(c);
-        }
-        else if (c == ')') {
-            while (!ops.empty() && ops.top() != '(') {
-                result += ops.top();
-                ops.pop();
+        else if (str[i] == '/' || str[i] == '*') {
+            if (tr != NULL && isdigit(tr->inf)) { // первый знак операции - корень
+                if (tr != NULL) tr->parent = n;
+                n->left = tr;
+                tr = n;
             }
-            if (!ops.empty()) ops.pop(); // удаляем (
-        }
-        else if (is_operator(c)) {
-            while (!ops.empty() && priority(ops.top()) >= priority(c)) {
-                result += ops.top();
-                ops.pop();
+            else { // добавляем справа от корня
+                if (tr != NULL) {
+                    n->parent = tr;
+                    n->left = tr->right;
+                    if (tr->right != NULL) tr->right->parent = n;
+                    tr->right = n;
+                }
             }
-            ops.push(c);
+        }
+        else { // цифра
+            if (!tr) tr = n; // первая в выражении - корень
+            else {
+                if (!tr->right) { // у корня нет правого сына
+                    n->parent = tr;
+                    n->left = tr->right;
+                    tr->right = n;
+                }
+                else { // ищем операнд без правого сына
+                    tree* x = tr->right;
+                    while (x->right) x = x->right;
+                    n->parent = x->parent;
+                    x->right = n;
+                }
+            }
         }
     }
-    while (!ops.empty()) {
-        result += ops.top();
-        ops.pop();
-    }
-    return result;
+    return tr;
 }
 
-// создание дерева выражений из постфиксной записи
-tree* tree_from_postfix(string postfix) {
-    stack<tree*> st;
-    for (char c : postfix) {
-        tree* n = node(c);
-
-        if (isdigit(c)) {
-            st.push(n); // если число то просто кладем в стек
-        }
-        else if (is_operator(c)) {
-            // если оператор то берем два последних узла
-            tree* right = st.top(); st.pop();
-            tree* left = st.top(); st.pop();
-
-            n->left = left;
-            n->right = right;
-            left->parent = n;
-            right->parent = n;
-            st.push(n);
-        }
-    }
-    return st.top();
-}
-
-// прямой обход (префиксный)
+// прямой обход (префиксная форма)
 void preorder(tree* tr) {
     if (tr) {
         cout << tr->inf << " ";
@@ -98,7 +73,7 @@ void preorder(tree* tr) {
     }
 }
 
-// обратный обход (постфиксный)
+// обратный обход (постфиксная форма) 
 void postorder(tree* tr) {
     if (tr) {
         postorder(tr->left);
@@ -107,14 +82,14 @@ void postorder(tree* tr) {
     }
 }
 
-// вычисление значения выражения
-int eval(tree* tr) {
+// Вычисление значения выражения
+int evaluate(tree* tr) {
     if (!tr) return 0;
     if (isdigit(tr->inf)) {
         return tr->inf - '0';
     }
-    int leftVal = eval(tr->left);
-    int rightVal = eval(tr->right);
+    int leftVal = evaluate(tr->left);
+    int rightVal = evaluate(tr->right);
 
     switch (tr->inf) {
     case '+': return leftVal + rightVal;
@@ -125,47 +100,62 @@ int eval(tree* tr) {
     }
 }
 
-// вывод дерева в виде структуры
-void printTree(tree* tr, int level = 0) {
+void clearTree(tree*& tr) {
     if (!tr) return;
-    printTree(tr->right, level + 1);
-
-    for (int i = 0; i < level; i++) {
-        cout << "    ";
-    }
-    cout << tr->inf << endl;
-    printTree(tr->left, level + 1);
+    clearTree(tr->left);
+    clearTree(tr->right);
+    delete tr;
+    tr = NULL;
 }
 
 int main() {
     setlocale(LC_ALL, "RUS");
-    string tmp;
+    string str;
     cout << "Введите математическое выражение: ";
-    getline(cin, tmp);
-    string clean_tmp;
-    for (char c : tmp) {
-        if (c != ' ') {
-            clean_tmp += c;
+    getline(cin, str);
+
+    string clean_str; // удалим пробелы
+    for (unsigned int i = 0; i < str.length(); i++) {
+        if (str[i] != ' ') {
+            clean_str += str[i];
         }
     }
-    try {
-        string postfix = to_postfix(clean_tmp);
-        tree* root = tree_from_postfix(postfix);
+
+    // Проверка на допустимые символы
+    string znak = "+-/*0123456789";
+    bool flag = true;
+    for (unsigned int i = 0; i < clean_str.length(); i++) {
+        if (znak.find_first_of(clean_str[i]) == string::npos) {
+            flag = false;
+            break;
+        }
+    }
+
+    if (!flag) {
+        cout << "Ошибка! Недопустимые символы в выражении!" << endl;
+        return 1;
+    }
+
+    else {
+        tree* tr = create_tree(clean_str);
+        if (tr == NULL) {
+            cout << "Ошибка при создании дерева!" << endl;
+            return 1;
+        }
+        cout << "\nИсходное выражение: " << clean_str << endl;
 
         cout << "Префиксная форма (прямой обход): ";
-        preorder(root);
+        preorder(tr);
         cout << endl;
 
         cout << "Постфиксная форма (обратный обход): ";
-        postorder(root);
+        postorder(tr);
         cout << endl;
 
-        int result = eval(root);
-        cout << "\nРезультат вычисления: " << result << endl;
+        cout << "\nРезультат вычисления: " << evaluate(tr) << endl;
 
+        clearTree(tr);
     }
-    catch (exception& e) {
-        cout << "Ошибка при обработке выражения!" << endl;
-    }
+
     return 0;
 }
