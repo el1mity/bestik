@@ -1,7 +1,7 @@
 ﻿#include <iostream>
 using namespace std;
 
-// Структура узла AVL-дерева
+
 struct Node {
     int data;
     Node* left;
@@ -16,60 +16,50 @@ struct Node {
     }
 };
 
-// Получение высоты
-int getHeight(Node* node) {
-    return node ? node->height : 0;
+int height(Node* node) {
+    if (node == NULL) return 0;
+    return node->height;
 }
 
-// Обновление высоты
 void updateHeight(Node* node) {
     if (node) {
-        node->height = max(getHeight(node->left), getHeight(node->right)) + 1;
+        node->height = max(height(node->left), height(node->right)) + 1;
     }
 }
 
-// Получение баланса
 int getBalance(Node* node) {
-    return node ? getHeight(node->left) - getHeight(node->right) : 0;
+    if (node == NULL) return 0;
+    return height(node->left) - height(node->right);
 }
 
-// Правый поворот
 Node* rotateRight(Node* y) {
     Node* x = y->left;
     Node* T2 = x->right;
-
     x->right = y;
     y->left = T2;
-
     updateHeight(y);
     updateHeight(x);
-
     return x;
 }
 
-// Левый поворот
 Node* rotateLeft(Node* x) {
     Node* y = x->right;
     Node* T2 = y->left;
-
     y->left = x;
     x->right = T2;
-
     updateHeight(x);
     updateHeight(y);
-
     return y;
 }
 
 // Балансировка
 Node* balance(Node* node) {
     if (!node) return nullptr;
-
     updateHeight(node);
-    int balanceFactor = getBalance(node);
+    int b = getBalance(node);
 
     // Левый перекос
-    if (balanceFactor > 1) {
+    if (b > 1) {
         if (getBalance(node->left) < 0) {
             node->left = rotateLeft(node->left);
         }
@@ -77,13 +67,12 @@ Node* balance(Node* node) {
     }
 
     // Правый перекос
-    if (balanceFactor < -1) {
+    if (b < -1) {
         if (getBalance(node->right) > 0) {
             node->right = rotateRight(node->right);
         }
         return rotateLeft(node);
     }
-
     return node;
 }
 
@@ -92,7 +81,6 @@ Node* insert(Node* root, int value) {
     if (!root) {
         return new Node(value);
     }
-
     if (value < root->data) {
         root->left = insert(root->left, value);
     }
@@ -102,7 +90,6 @@ Node* insert(Node* root, int value) {
     else {
         return root;
     }
-
     return balance(root);
 }
 
@@ -111,7 +98,6 @@ Node* search(Node* root, int value) {
     if (!root || root->data == value) {
         return root;
     }
-
     if (value < root->data) {
         return search(root->left, value);
     }
@@ -120,35 +106,19 @@ Node* search(Node* root, int value) {
 
 // Определение степени узла (количество потомков)
 int getNodeDegree(Node* node) {
-    if (!node) return -1; // Узел не найден
-
+    if (!node) return -1;
     int degree = 0;
     if (node->left) degree++;
     if (node->right) degree++;
-
     return degree;
 }
 
-// Симметричный обход для вывода дерева
+// Симметричный обход 
 void inorder(Node* root) {
     if (!root) return;
     inorder(root->left);
     cout << root->data << " ";
     inorder(root->right);
-}
-
-// Вывод дерева в структурированном виде
-void printTree(Node* root, int level = 0) {
-    if (!root) return;
-
-    printTree(root->right, level + 1);
-
-    for (int i = 0; i < level; i++) {
-        cout << "    ";
-    }
-    cout << root->data << endl;
-
-    printTree(root->left, level + 1);
 }
 
 // Очистка дерева
@@ -162,14 +132,9 @@ void clearTree(Node*& root) {
 
 int main() {
     setlocale(LC_ALL, "RUS");
-
     Node* root = nullptr;
     int n, value, x;
-
-    // Ввод исходных данных
-    cout << "=== Определение степени узла в AVL-дереве ===\n\n";
-    cout << "Введите количество элементов: ";
-    cin >> n;
+    cout << "Введите количество элементов: "; cin >> n;
 
     if (n <= 0) {
         cout << "Некорректное количество элементов!\n";
@@ -182,44 +147,22 @@ int main() {
         root = insert(root, value);
     }
 
-    // Вывод дерева
-    cout << "\nСтруктура AVL-дерева:\n";
-    printTree(root);
-
-    cout << "\nСимметричный обход (отсортированные элементы): ";
+    cout << "\nСимметричный обход: ";
     inorder(root);
     cout << endl;
 
-    // Ввод узла X
-    cout << "\nВведите значение узла X для определения его степени: ";
-    cin >> x;
+    cout << "\nВведите значение узла X для определения его степени: "; cin >> x;
 
-    // Поиск узла и определение степени
     Node* nodeX = search(root, x);
 
     if (nodeX) {
         int degree = getNodeDegree(nodeX);
-        cout << "\nУзел " << x << " найден!\n";
         cout << "Степень узла " << x << " = " << degree << endl;
-
-        // Дополнительная информация
-        cout << "\nДети узла:\n";
-        if (nodeX->left) {
-            cout << "  - Левый потомок: " << nodeX->left->data << endl;
-        }
-        if (nodeX->right) {
-            cout << "  - Правый потомок: " << nodeX->right->data << endl;
-        }
-        if (!nodeX->left && !nodeX->right) {
-            cout << "  - Узел является листом (нет детей)\n";
-        }
     }
     else {
-        cout << "\nУзел " << x << " не найден в дереве!\n";
+        cout << "\nУзел " << x << " не найден в дереве!" << endl;
     }
 
-    // Очистка памяти
     clearTree(root);
-
     return 0;
 }
